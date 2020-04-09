@@ -7,33 +7,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
+    - name: Set up Docker Buildx
+      uses: crazy-max/ghaction-docker-buildx@v1
+      with:
+        version: latest
     - name: build & publish
       run: |
         docker login -u jayfong -p ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-        docker build -t jayfong/yapi:latest .
-        docker build -t jayfong/yapi-heroku:latest -f ./Dockerfile.web .
-        docker push jayfong/yapi:latest
-    - name: login
-      uses: actions/heroku@master
-      env:
-        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      with:
-        args: container:login
-    - name: push
-      uses: actions/heroku@master
-      env:
-        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      with:
-        args: container:push -R -a docker-yapi web
-    - name: release
-      uses: actions/heroku@master
-      env:
-        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      with:
-        args: container:release -a docker-yapi web
-    - name: scale
-      uses: actions/heroku@master
-      env:
-        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      with:
-        args: ps:scale -a docker-yapi web=1
+        docker buildx build --platform linux/amd64,linux/arm64 --push -t jayfong/yapi:beta .
